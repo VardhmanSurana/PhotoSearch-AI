@@ -45,13 +45,13 @@ export function ConnectionTest() {
       
       if (response.ok) {
         const data = await response.json();
-        const hasLlava = data.models?.some((model: any) => model.name.includes('llava'));
+        const hasLlava = data.models?.some((model: any) => model.name.includes('llava:7b'));
         testResults.push({
           name: 'Ollama Connection',
           status: hasLlava ? 'success' : 'warning',
           message: hasLlava 
-            ? 'Ollama running with llava model' 
-            : 'Ollama running but llava model not found'
+            ? 'Ollama running with llava:7b model' 
+            : 'Ollama running but llava:7b model not found'
         });
       } else {
         testResults.push({
