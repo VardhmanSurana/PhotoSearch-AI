@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+
+
 import { usePhotoProcessor } from '@/hooks/usePhotoProcessor';
 
 export function FolderUpload() {
@@ -28,7 +31,12 @@ export function FolderUpload() {
     if (!files || files.length === 0) return;
 
     const folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : 'Single Upload';
-    const apiKey = localStorage.getItem('geminiApiKey') || ''; // Gemini API key is still needed for Gemini model
+    let apiKey = '';
+    if (selectedModel === 'gemini') {
+      apiKey = localStorage.getItem('geminiApiKey') || '';
+    } else if (selectedModel === 'mistral') {
+      apiKey = localStorage.getItem('mistralApiKey') || '';
+    }
     await processFolder(files, folderName, selectedModel, apiKey);
   };
 
@@ -56,14 +64,17 @@ export function FolderUpload() {
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="gemini" id="gemini-upload" />
+                <img src="/geminilogo.png" alt="Gemini Logo" className="w-5 h-5" />
                 <Label htmlFor="gemini-upload">Gemini API</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="ollama" id="ollama-upload" />
+                <img src="/ollamalogo.png" alt="Ollama Logo" className="w-5 h-5" />
                 <Label htmlFor="ollama-upload">Ollama (Local)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="mistral" id="mistral-upload" />
+                <img src="/mistrallogo.png" alt="Mistral AI Logo" className="w-5 h-5" />
                 <Label htmlFor="mistral-upload">Mistral AI</Label>
               </div>
             </RadioGroup>

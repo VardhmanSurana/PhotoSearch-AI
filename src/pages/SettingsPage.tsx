@@ -4,9 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Settings as SettingsIcon, Wifi, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+
+
+
+import { Settings as SettingsIcon, Wifi, CheckCircle, XCircle, AlertCircle, Sun, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { useTheme } from '@/hooks/useTheme';
 import { testMistralConnection } from '@/lib/mistral';
 
 interface TestResult {
@@ -29,18 +34,27 @@ export const SettingsPage = () => {
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
 
+  const { toast } = useToast();
+  const { theme, toggleTheme } = useTheme();
+
   useEffect(() => {
     localStorage.setItem('selectedModel', selectedModel);
   }, [selectedModel]);
 
   const handleSaveGeminiApiKey = () => {
     localStorage.setItem('geminiApiKey', geminiApiKey);
-    alert('Gemini API Key saved!');
+    toast({
+      title: "Gemini API Key saved!",
+      description: "Your Gemini API key has been successfully saved.",
+    });
   };
 
   const handleSaveMistralApiKey = () => {
     localStorage.setItem('mistralApiKey', mistralApiKey);
-    alert('Mistral API Key saved!');
+    toast({
+      title: "Mistral API Key saved!",
+      description: "Your Mistral API key has been successfully saved.",
+    });
   };
 
   const runConnectionTest = async () => {
@@ -96,7 +110,7 @@ export const SettingsPage = () => {
         });
       }
     } else if (selectedModel === 'mistral') {
-        const result = await testMistralConnection();
+        const result = await testMistralConnection(mistralApiKey);
         results.push({
             name: 'Mistral API Connection',
             status: result.success ? 'success' : 'error',
@@ -152,14 +166,17 @@ export const SettingsPage = () => {
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="gemini" id="gemini" />
+                <img src="/geminilogo.png" alt="Gemini Logo" className="w-5 h-5" />
                 <Label htmlFor="gemini">Gemini API</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="ollama" id="ollama" />
+                <img src="/ollamalogo.png" alt="Ollama Logo" className="w-5 h-5" />
                 <Label htmlFor="ollama">Ollama (Local)</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="mistral" id="mistral" />
+                <img src="/mistrallogo.png" alt="Mistral AI Logo" className="w-5 h-5" />
                 <Label htmlFor="mistral">Mistral AI</Label>
               </div>
             </RadioGroup>
@@ -242,9 +259,22 @@ export const SettingsPage = () => {
             )}
           </div>
 
-          <Button onClick={() => navigate(-1)} variant="outline" className="w-full">
-            Go Back
-          </Button>
+          <div className="space-y-2">
+            <Label>Theme</Label>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="icon" onClick={toggleTheme}>
+                {theme === 'light' ? <Moon className="h-[1.2rem] w-[1.2rem]" /> : <Sun className="h-[1.2rem] w-[1.2rem]" />}
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+              <span className="text-sm text-muted-foreground">Current theme: {theme}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Button onClick={() => navigate(-1)} variant="outline" className="w-full">
+              Go Back
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

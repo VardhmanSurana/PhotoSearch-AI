@@ -220,7 +220,7 @@ export function usePhotoProcessor() {
           } else if (model === 'mistral') {
             try {
               const base64 = await fileToBase64(file);
-              const result = await generateMistralDescription(base64.split(',')[1], IMAGE_PROMPT);
+              const result = await generateMistralDescription(base64.split(',')[1], IMAGE_PROMPT, apiKey);
               if (result.success && result.description) {
                 const parsed = parseAIResponse(result.description);
                 description = parsed.description;
