@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
 import { db, PhotoRecord, FolderRecord } from '@/lib/database';
-import { imageProcessor } from '@/lib/imageProcessor';
 import { SecurityManager } from '@/lib/security';
 import { PerformanceManager } from '@/lib/performance';
 import { useToast } from '@/hooks/use-toast';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateImageDescription as generateMistralDescription } from '@/lib/mistral';
+import { IMAGE_PROMPT } from '@/lib/Prompts';
 
 export interface ProcessingStats {
   total: number;
@@ -24,12 +26,9 @@ export function usePhotoProcessor() {
   const processFolder = useCallback(async (
     files: FileList,
     folderName: string,
-    useGemini: boolean = true,
+    model: 'gemini' | 'ollama' | 'mistral' = 'gemini',
     apiKey?: string
   ) => {
-    if (useGemini && apiKey) {
-      imageProcessor.setGeminiKey(apiKey);
-    }
 
     const imageFiles = Array.from(files).filter(file => 
       file.type.startsWith('image/')
@@ -137,9 +136,104 @@ export function usePhotoProcessor() {
           }
 
           // Generate description
-          const description = useGemini 
-            ? await imageProcessor.processWithGemini(file)
-            : await imageProcessor.processWithOllama(file);
+          let description = "";
+          let classification = "";
+          let extracted_text = "";
+
+          const parseAIResponse = (responseText: string) => {
+            const descMatch = responseText.match(/Description: ([\s\S]*?)\nClassification:/);
+            const classMatch = responseText.match(/Classification: ([^\n]*)/);
+            const textMatch = responseText.match(/Extracted Text: ([\s\S]*)/);
+
+            return {
+              description: descMatch ? descMatch[1].trim() : "",
+              classification: classMatch ? classMatch[1].trim() : "Other",
+              extracted_text: textMatch ? textMatch[1].trim() : "N/A",
+            };
+          };
+
+          const fileToBase64 = (file: File): Promise<string> => {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          };
+
+          const fileToGenerativePart = async (file: File) => {
+            const base64 = await fileToBase64(file);
+            return {
+              inlineData: {
+                data: base64.split(',')[1],
+                mimeType: file.type
+              }
+            };
+          };
+
+          if (model === 'gemini') {
+            if (!apiKey) {
+              throw new Error('Gemini API key not set');
+            }
+            try {
+              const genAI = new GoogleGenerativeAI(apiKey);
+              const geminiModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+              const imageData = await fileToGenerativePart(file);
+              const prompt = IMAGE_PROMPT;
+              const result = await geminiModel.generateContent([prompt, imageData]);
+              const response = await result.response;
+              const parsed = parseAIResponse(response.text());
+              description = parsed.description;
+              classification = parsed.classification;
+              extracted_text = parsed.extracted_text;
+            } catch (error) {
+              console.error('Gemini processing error:', error);
+              throw new Error('Failed to process image with Gemini');
+            }
+          } else if (model === 'ollama') {
+            try {
+              const base64 = await fileToBase64(file);
+              const response = await fetch(`http://localhost:11434/api/generate`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  model: 'llava',
+                  prompt: IMAGE_PROMPT,
+                  images: [base64.split(',')[1]],
+                  stream: false
+                })
+              });
+              if (!response.ok) {
+                throw new Error(`Ollama API error: ${response.status}`);
+              }
+              const data = await response.json();
+              const parsed = parseAIResponse(data.response);
+              description = parsed.description;
+              classification = parsed.classification;
+              extracted_text = parsed.extracted_text;
+            } catch (error) {
+              console.error('Ollama processing error:', error);
+              throw new Error('Failed to process image with Ollama. Make sure Ollama is running locally.');
+            }
+          } else if (model === 'mistral') {
+            try {
+              const base64 = await fileToBase64(file);
+              const result = await generateMistralDescription(base64.split(',')[1], IMAGE_PROMPT);
+              if (result.success && result.description) {
+                const parsed = parseAIResponse(result.description);
+                description = parsed.description;
+                classification = parsed.classification;
+                extracted_text = parsed.extracted_text;
+              } else {
+                throw new Error(result.description || "Mistral description generation failed.");
+              }
+            } catch (error) {
+              console.error('Mistral processing error:', error);
+              throw new Error('Failed to process image with Mistral.');
+            }
+          }
 
           // Create optimized thumbnail
           const thumbnail = await PerformanceManager.compressImage(file, 300, 300, 0.8);
@@ -148,6 +242,8 @@ export function usePhotoProcessor() {
           const photoData: PhotoRecord = {
             path: photoDbPath, // Use the robust path
             description,
+            classification,
+            extracted_text,
             folderId: folder!.id!.toString(),
             filename: file.name,
             size: file.size,

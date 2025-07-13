@@ -63,4 +63,26 @@ export class SearchEngine {
       .equals(folderId)
       .toArray();
   }
+
+  async getAllPhotos(): Promise<PhotoRecord[]> {
+    return await db.photos
+      .where('processed')
+      .equals(1)
+      .reverse()
+      .toArray();
+  }
+
+  async getPhotosByClassification(classification: string): Promise<PhotoRecord[]> {
+    return await db.photos
+      .where('classification')
+      .equals(classification)
+      .reverse()
+      .toArray();
+  }
+
+  async getUniqueClassifications(): Promise<string[]> {
+    const photos = await db.photos.toArray();
+    const classifications = new Set(photos.map(p => p.classification));
+    return Array.from(classifications);
+  }
 }

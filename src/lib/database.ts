@@ -4,6 +4,8 @@ export interface PhotoRecord {
   id?: number;
   path: string;
   description: string;
+  classification: string;
+  extracted_text: string;
   folderId: string;
   filename: string;
   size: number;
@@ -28,8 +30,8 @@ export class PhotoSearchDB extends Dexie {
 
   constructor() {
     super('PhotoSearchDB');
-    this.version(1).stores({
-      photos: '++id, path, folderId, filename, processed, createdAt',
+    this.version(3).stores({
+      photos: '++id, path, folderId, filename, processed, createdAt, classification, extracted_text',
       folders: '++id, name, path, lastScanned'
     });
   }

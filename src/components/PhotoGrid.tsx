@@ -3,9 +3,11 @@ import { PhotoRecord, db } from '@/lib/database';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Eye, Calendar, HardDrive, Trash2 } from 'lucide-react';
+import { generateImageDescription } from '@/lib/mistral';
+import { IMAGE_PROMPT } from '@/lib/Prompts';
 
 interface PhotoGridProps {
   photos: PhotoRecord[];
@@ -16,6 +18,28 @@ interface PhotoGridProps {
 export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoRecord | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<PhotoRecord | null>(null);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
+
+  const handleGenerateDescription = async () => {
+    if (selectedPhoto && selectedPhoto.thumbnail) {
+      setGeneratingDescription(true);
+      // Extract base64 string from data URL
+      const base64Image = selectedPhoto.thumbnail.split(',')[1];
+      const result = await generateImageDescription(base64Image, IMAGE_PROMPT);
+      if (result.success && result.description) {
+        // Update the photo in the database with the new description
+        await db.photos.update(selectedPhoto.id!, { description: result.description });
+        // Update the selectedPhoto state to reflect the change in the UI
+        setSelectedPhoto(prev => prev ? { ...prev, description: result.description } : null);
+      } else {
+        console.error("Failed to generate description:", result.description);
+        alert("Failed to generate description. Check console for details.");
+      }
+      setGeneratingDescription(false);
+    } else {
+      alert("No image thumbnail available for description generation.");
+    }
+  };
 
   const handleDeletePhoto = async () => {
     if (photoToDelete && photoToDelete.id !== undefined) {
@@ -122,6 +146,9 @@ export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
             <>
               <DialogHeader>
                 <DialogTitle>{selectedPhoto.filename}</DialogTitle>
+                <DialogDescription>
+                  Details and AI-generated description for {selectedPhoto.filename}.
+                </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4">
@@ -141,6 +168,13 @@ export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
                     <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
                       {selectedPhoto.description}
                     </p>
+                    <Button 
+                      onClick={handleGenerateDescription}
+                      disabled={generatingDescription}
+                      className="mt-2 w-full"
+                    >
+                      {generatingDescription ? "Generating..." : "Generate Description"}
+                    </Button>
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">

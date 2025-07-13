@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
 import { ConnectionTest } from '@/components/ConnectionTest';
 import { PerformanceManager } from '@/lib/performance';
+import ShowPhotos from '@/components/ShowPhotos';
 
 const Index = () => {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
@@ -90,7 +91,7 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto mb-8">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-8">
             <TabsTrigger value="search" className="flex items-center gap-2">
               <SearchIcon className="w-4 h-4" />
               Search
@@ -98,6 +99,10 @@ const Index = () => {
             <TabsTrigger value="folder-upload" className="flex items-center gap-2">
               <Folder className="w-4 h-4" />
               Folder Upload
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-2">
+              <Image className="w-4 h-4" />
+              Photos
             </TabsTrigger>
           </TabsList>
 
@@ -125,6 +130,10 @@ const Index = () => {
 
           <TabsContent value="folder-upload">
             <FolderUpload />
+          </TabsContent>
+
+          <TabsContent value="photos">
+            <ShowPhotos />
           </TabsContent>
         </Tabs>
       </main>

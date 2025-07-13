@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Settings as SettingsIcon, Wifi, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import { testMistralConnection } from '@/lib/mistral';
 
 interface TestResult {
   name: string;
@@ -16,11 +17,14 @@ interface TestResult {
 
 export const SettingsPage = () => {
   const navigate = useNavigate();
-  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama'>(() => {
-    return localStorage.getItem('selectedModel') as 'gemini' | 'ollama' || 'gemini';
+  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral'>(() => {
+    return localStorage.getItem('selectedModel') as 'gemini' | 'ollama' | 'mistral' || 'gemini';
   });
   const [geminiApiKey, setGeminiApiKey] = useState(() => {
     return localStorage.getItem('geminiApiKey') || '';
+  });
+  const [mistralApiKey, setMistralApiKey] = useState(() => {
+    return localStorage.getItem('mistralApiKey') || '';
   });
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
@@ -29,9 +33,14 @@ export const SettingsPage = () => {
     localStorage.setItem('selectedModel', selectedModel);
   }, [selectedModel]);
 
-  const handleSaveApiKey = () => {
+  const handleSaveGeminiApiKey = () => {
     localStorage.setItem('geminiApiKey', geminiApiKey);
     alert('Gemini API Key saved!');
+  };
+
+  const handleSaveMistralApiKey = () => {
+    localStorage.setItem('mistralApiKey', mistralApiKey);
+    alert('Mistral API Key saved!');
   };
 
   const runConnectionTest = async () => {
@@ -86,6 +95,13 @@ export const SettingsPage = () => {
           message: `Ollama not running: ${error}`,
         });
       }
+    } else if (selectedModel === 'mistral') {
+        const result = await testMistralConnection();
+        results.push({
+            name: 'Mistral API Connection',
+            status: result.success ? 'success' : 'error',
+            message: result.message,
+        });
     }
     setTestResults(results);
     setTesting(false);
@@ -131,7 +147,7 @@ export const SettingsPage = () => {
             <Label>Select AI Model</Label>
             <RadioGroup
               value={selectedModel}
-              onValueChange={setSelectedModel}
+              onValueChange={(value) => setSelectedModel(value as 'gemini' | 'ollama' | 'mistral')}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -141,6 +157,10 @@ export const SettingsPage = () => {
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="ollama" id="ollama" />
                 <Label htmlFor="ollama">Ollama (Local)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mistral" id="mistral" />
+                <Label htmlFor="mistral">Mistral AI</Label>
               </div>
             </RadioGroup>
           </div>
@@ -156,7 +176,7 @@ export const SettingsPage = () => {
                   onChange={(e) => setGeminiApiKey(e.target.value)}
                   placeholder="Enter your Gemini API key"
                 />
-                <Button onClick={handleSaveApiKey}>Save</Button>
+                <Button onClick={handleSaveGeminiApiKey}>Save</Button>
               </div>
               <p className="text-xs text-muted-foreground">
                 Get your API key from{' '}
@@ -167,6 +187,33 @@ export const SettingsPage = () => {
                   className="text-primary hover:underline"
                 >
                   Google AI Studio
+                </a>
+              </p>
+            </div>
+          )}
+
+          {selectedModel === 'mistral' && (
+            <div className="space-y-2">
+              <Label htmlFor="mistral-api-key">Mistral API Key</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="mistral-api-key"
+                  type="password"
+                  value={mistralApiKey}
+                  onChange={(e) => setMistralApiKey(e.target.value)}
+                  placeholder="Enter your Mistral API key"
+                />
+                <Button onClick={handleSaveMistralApiKey}>Save</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Get your API key from{' '}
+                <a
+                  href="https://console.mistral.ai/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Mistral AI Platform
                 </a>
               </p>
             </div>

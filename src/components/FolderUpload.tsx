@@ -6,15 +6,12 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { usePhotoProcessor } from '@/hooks/usePhotoProcessor';
 
-// Minor change to force refresh
-
 export function FolderUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const singleFileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedModel, setSelectedModel] = useState(() => {
-    return localStorage.getItem('selectedModel') || 'gemini';
+  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral'>(() => {
+    return localStorage.getItem('selectedModel') as 'gemini' | 'ollama' | 'mistral' || 'gemini';
   });
-  
   
   const { stats, processFolder, stopProcessing } = usePhotoProcessor();
 
@@ -31,8 +28,8 @@ export function FolderUpload() {
     if (!files || files.length === 0) return;
 
     const folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : 'Single Upload';
-    const apiKey = localStorage.getItem('geminiApiKey') || '';
-    await processFolder(files, folderName, selectedModel === 'gemini', apiKey);
+    const apiKey = localStorage.getItem('geminiApiKey') || ''; // Gemini API key is still needed for Gemini model
+    await processFolder(files, folderName, selectedModel, apiKey);
   };
 
   return (
@@ -54,7 +51,7 @@ export function FolderUpload() {
             <Label>AI Model for Processing</Label>
             <RadioGroup
               value={selectedModel}
-              onValueChange={setSelectedModel}
+              onValueChange={(value) => setSelectedModel(value as 'gemini' | 'ollama' | 'mistral')}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -64,6 +61,10 @@ export function FolderUpload() {
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="ollama" id="ollama-upload" />
                 <Label htmlFor="ollama-upload">Ollama (Local)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="mistral" id="mistral-upload" />
+                <Label htmlFor="mistral-upload">Mistral AI</Label>
               </div>
             </RadioGroup>
           </div>
