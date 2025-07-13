@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,10 +6,20 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { usePhotoProcessor } from '@/hooks/usePhotoProcessor';
 
+
 const FileUpload: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedModel, setSelectedModel] = useState(() => {
-    return localStorage.getItem('selectedModel') || 'gemini';
+  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral' | 'openrouter'>(() => {
+    const stored = localStorage.getItem('selectedModel');
+    if (
+      stored === 'gemini' ||
+      stored === 'ollama' ||
+      stored === 'mistral' ||
+      stored === 'openrouter'
+    ) {
+      return stored;
+    }
+    return 'gemini';
   });
 
   const { stats, processFolder, stopProcessing } = usePhotoProcessor();
@@ -23,7 +33,7 @@ const FileUpload: React.FC = () => {
     if (!files || files.length === 0) return;
 
     const apiKey = localStorage.getItem('geminiApiKey') || '';
-    await processFolder(files, 'Individual Uploads', selectedModel === 'gemini', apiKey);
+    await processFolder(files, 'Individual Uploads', selectedModel, apiKey);
   };
 
   return (
@@ -45,7 +55,7 @@ const FileUpload: React.FC = () => {
             <Label>AI Model for Processing</Label>
             <RadioGroup
               value={selectedModel}
-              onValueChange={setSelectedModel}
+              onValueChange={(value) => setSelectedModel(value as 'gemini' | 'ollama' | 'mistral' | 'openrouter')}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">

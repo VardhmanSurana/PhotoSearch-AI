@@ -4,15 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
-
-
-import { Settings as SettingsIcon, Wifi, CheckCircle, XCircle, AlertCircle, Sun, Moon } from 'lucide-react';
+import { Settings as SettingsIcon, Wifi, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/hooks/useTheme';
 import { testMistralConnection } from '@/lib/mistral';
+import { testOpenrouterConnection } from '@/lib/openrouter';
 
 interface TestResult {
   name: string;
@@ -22,8 +20,8 @@ interface TestResult {
 
 export const SettingsPage = () => {
   const navigate = useNavigate();
-  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral'>(() => {
-    return localStorage.getItem('selectedModel') as 'gemini' | 'ollama' | 'mistral' || 'gemini';
+  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral' | 'openrouter'>(() => {
+    return localStorage.getItem('selectedModel') as 'gemini' | 'ollama' | 'mistral' | 'openrouter' || 'gemini';
   });
   const [geminiApiKey, setGeminiApiKey] = useState(() => {
     return localStorage.getItem('geminiApiKey') || '';
@@ -31,6 +29,14 @@ export const SettingsPage = () => {
   const [mistralApiKey, setMistralApiKey] = useState(() => {
     return localStorage.getItem('mistralApiKey') || '';
   });
+  const [openrouterApiKey, setOpenrouterApiKey] = useState(() => {
+    return localStorage.getItem('openrouterApiKey') || '';
+  });
+  const [openrouterSelectedModel, setOpenrouterSelectedModel] = useState(() => {
+    return localStorage.getItem('openrouterSelectedModel') || '';
+  });
+  const [openrouterModels, setOpenrouterModels] = useState<string[]>([]);
+  const [openrouterFreeModelsOnly, setOpenrouterFreeModelsOnly] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
 
@@ -51,10 +57,7 @@ export const SettingsPage = () => {
 
   const handleSaveMistralApiKey = () => {
     localStorage.setItem('mistralApiKey', mistralApiKey);
-    toast({
-      title: "Mistral API Key saved!",
-      description: "Your Mistral API key has been successfully saved.",
-    });
+    alert('Mistral API Key saved!');
   };
 
   const runConnectionTest = async () => {
@@ -116,6 +119,17 @@ export const SettingsPage = () => {
             status: result.success ? 'success' : 'error',
             message: result.message,
         });
+    } else if (selectedModel === 'openrouter') {
+        const result = await testOpenrouterConnection(openrouterApiKey);
+        results.push({
+            name: 'OpenRouter Connection',
+            status: result.success ? 'success' : 'error',
+            message: result.message,
+        });
+        if (result.success && result.models) {
+            setOpenrouterModels(result.models);
+            localStorage.setItem('openrouterModels', JSON.stringify(result.models));
+        }
     }
     setTestResults(results);
     setTesting(false);
@@ -179,6 +193,11 @@ export const SettingsPage = () => {
                 <img src="/mistrallogo.png" alt="Mistral AI Logo" className="w-5 h-5" />
                 <Label htmlFor="mistral">Mistral AI</Label>
               </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="openrouter" id="openrouter" />
+                <img src="/openrouterlogo.png" alt="OpenRouter Logo" className="w-5 h-5" />
+                <Label htmlFor="openrouter">OpenRouter</Label>
+              </div>
             </RadioGroup>
           </div>
 
@@ -236,11 +255,69 @@ export const SettingsPage = () => {
             </div>
           )}
 
+          {selectedModel === 'openrouter' && (
+            <div className="space-y-2">
+              <Label htmlFor="openrouter-api-key">OpenRouter API Key</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="openrouter-api-key"
+                  type="password"
+                  value={openrouterApiKey}
+                  onChange={(e) => setOpenrouterApiKey(e.target.value)}
+                  placeholder="Enter your OpenRouter API key"
+                />
+                <Button onClick={handleSaveOpenrouterApiKey}>Save</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Get your API key from{' '}
+                <a
+                  href="https://openrouter.ai/docs#authentication"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  OpenRouter Docs
+                </a>
+              </p>
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox
+                  id="free-models-only"
+                  checked={openrouterFreeModelsOnly}
+                  onCheckedChange={(checked) => setOpenrouterFreeModelsOnly(checked as boolean)}
+                />
+                <Label htmlFor="free-models-only">Show Free Models Only</Label>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Button onClick={runConnectionTest} disabled={testing} className="w-full">
               <Wifi className="w-4 h-4 mr-2" />
               {testing ? 'Running Tests...' : 'Run Connection Test'}
             </Button>
+            {selectedModel === 'openrouter' && openrouterApiKey && openrouterModels.length > 0 && (
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="openrouter-model-select">Select Model</Label>
+                <Select
+                  value={openrouterSelectedModel}
+                  onValueChange={(value) => {
+                    setOpenrouterSelectedModel(value);
+                    localStorage.setItem('openrouterSelectedModel', value);
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select an OpenRouter model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {openrouterModels.map((modelId) => (
+                      <SelectItem key={modelId} value={modelId}>
+                        {modelId}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             {testResults.length > 0 && (
               <div className="space-y-3 mt-4">
                 {testResults.map((result, index) => (

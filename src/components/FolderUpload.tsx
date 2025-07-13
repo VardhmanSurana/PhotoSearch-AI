@@ -1,19 +1,20 @@
-import { useRef, useState } from 'react';
-import { Upload, Folder } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-
-
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { usePhotoProcessor } from '@/hooks/usePhotoProcessor';
+import React, { useRef, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Folder, Upload } from 'lucide-react';
 
 export function FolderUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const singleFileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral'>(() => {
-    return localStorage.getItem('selectedModel') as 'gemini' | 'ollama' | 'mistral' || 'gemini';
+  const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral' | 'openrouter'>(() => {
+    return localStorage.getItem('selectedModel') as 'gemini' | 'ollama' | 'mistral' | 'openrouter' || 'gemini';
+  });
+  const [openrouterSelectedModel, setOpenrouterSelectedModel] = useState(() => {
+    return localStorage.getItem('openrouterSelectedModel') || '';
   });
   
   const { stats, processFolder, stopProcessing } = usePhotoProcessor();
@@ -36,8 +37,10 @@ export function FolderUpload() {
       apiKey = localStorage.getItem('geminiApiKey') || '';
     } else if (selectedModel === 'mistral') {
       apiKey = localStorage.getItem('mistralApiKey') || '';
+    } else if (selectedModel === 'openrouter') {
+      apiKey = localStorage.getItem('openrouterApiKey') || '';
     }
-    await processFolder(files, folderName, selectedModel, apiKey);
+    await processFolder(files, folderName, selectedModel, apiKey, openrouterSelectedModel);
   };
 
   return (
@@ -59,7 +62,7 @@ export function FolderUpload() {
             <Label>AI Model for Processing</Label>
             <RadioGroup
               value={selectedModel}
-              onValueChange={(value) => setSelectedModel(value as 'gemini' | 'ollama' | 'mistral')}
+              onValueChange={(value) => setSelectedModel(value as 'gemini' | 'ollama' | 'mistral' | 'openrouter')}
               className="flex space-x-4"
             >
               <div className="flex items-center space-x-2">
@@ -76,6 +79,11 @@ export function FolderUpload() {
                 <RadioGroupItem value="mistral" id="mistral-upload" />
                 <img src="/mistrallogo.png" alt="Mistral AI Logo" className="w-5 h-5" />
                 <Label htmlFor="mistral-upload">Mistral AI</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="openrouter" id="openrouter-upload" />
+                <img src="/openrouterlogo.png" alt="OpenRouter Logo" className="w-5 h-5" />
+                <Label htmlFor="openrouter-upload">OpenRouter</Label>
               </div>
             </RadioGroup>
           </div>
