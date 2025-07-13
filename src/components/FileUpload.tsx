@@ -1,38 +1,29 @@
-import { useRef, useState } from 'react';
-import { Upload, Folder } from 'lucide-react';
+import React, { useState, ChangeEvent, useRef } from 'react';
+import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { usePhotoProcessor } from '@/hooks/usePhotoProcessor';
 
-// Minor change to force refresh
-
-export function FolderUpload() {
+const FileUpload: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const singleFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedModel, setSelectedModel] = useState(() => {
     return localStorage.getItem('selectedModel') || 'gemini';
   });
-  
-  
+
   const { stats, processFolder, stopProcessing } = usePhotoProcessor();
 
-  const handleFolderSelect = () => {
+  const handleFileSelect = () => {
     fileInputRef.current?.click();
-  };
-
-  const handleSingleFileSelect = () => {
-    singleFileInputRef.current?.click();
   };
 
   const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const folderName = files[0].webkitRelativePath ? files[0].webkitRelativePath.split('/')[0] : 'Single Upload';
     const apiKey = localStorage.getItem('geminiApiKey') || '';
-    await processFolder(files, folderName, selectedModel === 'gemini', apiKey);
+    await processFolder(files, 'Individual Uploads', selectedModel === 'gemini', apiKey);
   };
 
   return (
@@ -40,13 +31,13 @@ export function FolderUpload() {
       <CardContent className="p-6">
         <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-            <Folder className="w-8 h-8 text-primary" />
+            <Upload className="w-8 h-8 text-primary" />
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold mb-2">Upload Photo Folder</h3>
+            <h3 className="text-lg font-semibold mb-2">Upload Photos</h3>
             <p className="text-muted-foreground">
-              Select a folder containing your photos to start AI-powered search
+              Select individual or multiple photos to start AI-powered search
             </p>
           </div>
 
@@ -85,39 +76,24 @@ export function FolderUpload() {
               </Button>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
-              <Button onClick={handleFolderSelect} size="lg" className="w-full">
-                <Folder className="w-5 h-5 mr-2" />
-                Select Photo Folder
-              </Button>
-              <Button onClick={handleSingleFileSelect} size="lg" className="w-full" variant="outline">
-                <Upload className="w-5 h-5 mr-2" />
-                Upload Single/Multiple Images
-              </Button>
-            </div>
+            <Button onClick={handleFileSelect} size="lg" className="w-full">
+              <Upload className="w-5 h-5 mr-2" />
+              Select Photos
+            </Button>
           )}
 
           <input
             ref={fileInputRef}
             type="file"
             multiple
-            // @ts-expect-error - webkitdirectory is not in TypeScript types but works in browsers
-            webkitdirectory="true"
             className="hidden"
             onChange={handleFilesSelected}
             accept="image/*"
           />
-          <input
-            ref={singleFileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFilesSelected}
-            accept="image/*"
-          />
-          
         </div>
       </CardContent>
     </Card>
   );
-}
+};
+
+export default FileUpload;

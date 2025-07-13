@@ -33,6 +33,10 @@ export class PhotoSearchDB extends Dexie {
       folders: '++id, name, path, lastScanned'
     });
   }
+
+  async deletePhoto(id: number): Promise<void> {
+    await this.photos.delete(id);
+  }
 }
 
 export const db = new PhotoSearchDB();

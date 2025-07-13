@@ -1,7 +1,7 @@
 // Performance optimizations for PhotoSearch AI
 
 export class PerformanceManager {
-  private static cache = new Map<string, any>();
+  private static cache = new Map<string, unknown>();
   private static readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   // Image compression for thumbnails
@@ -36,7 +36,7 @@ export class PerformanceManager {
   }
 
   // Debounced search function
-  static debounce<T extends (...args: any[]) => any>(
+  static debounce<T extends (...args: unknown[]) => unknown>(
     func: T,
     delay: number
   ): (...args: Parameters<T>) => void {
@@ -48,11 +48,13 @@ export class PerformanceManager {
   }
 
   // Cached API calls
-  static async cachedFetch(
+  static async cachedFetch<
+    T extends (...args: unknown[]) => Promise<unknown>
+  >(
     key: string,
-    fetchFunction: () => Promise<any>,
+    fetchFunction: T,
     ttl: number = this.CACHE_TTL
-  ): Promise<any> {
+  ): Promise<Awaited<ReturnType<T>>> {
     const cached = this.cache.get(key);
     
     if (cached && Date.now() - cached.timestamp < ttl) {

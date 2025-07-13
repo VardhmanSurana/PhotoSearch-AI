@@ -1,73 +1,67 @@
-# Welcome to your Lovable project
+# PhotoSense AI
 
-## Project info
+PhotoSense AI is a modern web application designed to help you intelligently manage and search your photo library. Users can upload individual photos or entire folders, and the application leverages AI to process the images, making them easily searchable through a clean and intuitive interface.
 
-**URL**: https://lovable.dev/projects/d2da8f62-7044-492f-a20f-ec54d9af4070
+Built with a powerful tech stack including React, Vite, TypeScript, and Tailwind CSS, this project serves as a robust starting point for developing advanced, AI-powered image management solutions.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+-   **File and Folder Uploads:** Easily upload your images.
+-   **AI-Powered Search:** Find photos based on their content.
+-   **Dynamic Photo Grid:** A responsive and beautiful gallery for your images.
+-   **Modern UI:** Built with Shadcn UI for a sleek and accessible user experience.
+-   **Client-Side Database:** Utilizes Dexie.js for efficient client-side storage and indexing.
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d2da8f62-7044-492f-a20f-ec54d9af4070) and start prompting.
+Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+Make sure you have the following software installed on your machine:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+-   [Node.js](https://nodejs.org/) (v18 or newer recommended)
+-   [npm](https://www.npmjs.com/get-npm) / [yarn](https://classic.yarnpkg.com/en/docs/install)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+1.  **Clone the repository:**
+    ```sh
+    git clone https://github.com/your-username/photo-sense-ai.git
+    cd photo-sense-ai
+    ```
+
+2.  **Install dependencies:**
+    ```sh
+    npm install
+    # or
+    yarn install
+    ```
+
+3.  **Set up environment variables:**
+    Create a `.env` file in the root of the project. You may need to add API keys or other configuration variables here for the AI services or other parts of the application.
+    ```sh
+    touch .env
+    ```
+    Example of variables you might need:
+    ```env
+    GEMINI_API_KEY=YOUR_API_KEY_HERE
+    ```
+
+### Running the Development Server
+
+To start the application in development mode, run the following command. This will start a local server, typically at `http://localhost:5173`.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will automatically reload if you change any of the source files.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Building for Production
 
-**Use GitHub Codespaces**
+To create a production-ready build of the application, run:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/d2da8f62-7044-492f-a20f-ec54d9af4070) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```sh
+npm run build
+```

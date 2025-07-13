@@ -45,7 +45,8 @@ export function ConnectionTest() {
       
       if (response.ok) {
         const data = await response.json();
-        const hasLlava = data.models?.some((model: any) => model.name.includes('llava:7b'));
+        interface OllamaModel { name: string; };
+        const hasLlava = data.models?.some((model: OllamaModel) => model.name.includes('llava:7b'));
         testResults.push({
           name: 'Ollama Connection',
           status: hasLlava ? 'success' : 'warning',

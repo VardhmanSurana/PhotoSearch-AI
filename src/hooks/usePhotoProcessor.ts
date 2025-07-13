@@ -81,21 +81,34 @@ export function usePhotoProcessor() {
       isProcessing: true
     });
 
+    // Determine effective folder path for database
+    let effectiveFolderPath: string;
+    let effectiveFolderName: string;
+
+    if (files[0].webkitRelativePath) {
+      effectiveFolderPath = files[0].webkitRelativePath.split('/')[0];
+      effectiveFolderName = folderName; // Use the passed folderName
+    } else {
+      // For single/multiple file uploads
+      effectiveFolderPath = "__individual_uploads__"; // A unique identifier for individual uploads
+      effectiveFolderName = "Individual Uploads"; // A user-friendly name
+    }
+
     // Create or update folder record
-    const folderPath = files[0].webkitRelativePath.split('/')[0];
-    let folder = await db.folders.where('path').equals(folderPath).first();
-    
+    let folder = await db.folders.where('path').equals(effectiveFolderPath).first();
+
     if (!folder) {
       const folderId = await db.folders.add({
-        name: folderName,
-        path: folderPath,
-        photoCount: validFiles.length,
+        name: effectiveFolderName,
+        path: effectiveFolderPath,
+        photoCount: validFiles.length, // This will be updated later
         lastScanned: new Date()
       });
       folder = await db.folders.get(folderId);
     } else {
+      // Update existing folder record
       await db.folders.update(folder.id!, {
-        photoCount: validFiles.length,
+        photoCount: (folder.photoCount || 0) + validFiles.length, // Increment photo count
         lastScanned: new Date()
       });
     }
@@ -109,9 +122,12 @@ export function usePhotoProcessor() {
       async (file) => {
         try {
           // Check if already processed
+          // Use a more robust path for checking existing photos
+          const photoDbPath = file.webkitRelativePath || `${effectiveFolderPath}/${file.name}`;
+
           const existing = await db.photos
             .where('path')
-            .equals(file.webkitRelativePath)
+            .equals(photoDbPath)
             .first();
 
           if (existing && existing.processed === 1) {
@@ -130,7 +146,7 @@ export function usePhotoProcessor() {
 
           // Save to database
           const photoData: PhotoRecord = {
-            path: file.webkitRelativePath,
+            path: photoDbPath, // Use the robust path
             description,
             folderId: folder!.id!.toString(),
             filename: file.name,

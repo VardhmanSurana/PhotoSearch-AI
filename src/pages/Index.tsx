@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { SearchEngine } from '@/lib/searchEngine';
 import { PhotoRecord } from '@/lib/database';
 import { SearchBar } from '@/components/SearchBar';
@@ -6,7 +6,9 @@ import { FolderUpload } from '@/components/FolderUpload';
 import { PhotoGrid } from '@/components/PhotoGrid';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image, Upload, Search as SearchIcon, TestTube } from 'lucide-react';
+import { Image, Upload, Search as SearchIcon, TestTube, Sun, Moon, Settings, Folder } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useTheme } from '@/hooks/useTheme';
 import { ConnectionTest } from '@/components/ConnectionTest';
 import { PerformanceManager } from '@/lib/performance';
 
@@ -14,13 +16,10 @@ const Index = () => {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const searchEngine = new SearchEngine();
+  const searchEngine = useMemo(() => new SearchEngine(), []);
+  const { theme, toggleTheme } = useTheme();
 
-  useEffect(() => {
-    loadRecentPhotos();
-  }, []);
-
-  const loadRecentPhotos = async () => {
+  const loadRecentPhotos = useCallback(async () => {
     setLoading(true);
     try {
       const recentPhotos = await searchEngine.getRecentPhotos();
@@ -30,7 +29,13 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchEngine]);
+
+  useEffect(() => {
+    loadRecentPhotos();
+  }, [loadRecentPhotos]);
+
+  
 
   const debouncedSearch = PerformanceManager.debounce(async (query: string) => {
     setLoading(true);
@@ -49,6 +54,10 @@ const Index = () => {
     debouncedSearch(query);
   };
 
+  const handlePhotoDelete = (deletedPhotoId: number) => {
+    setPhotos(prevPhotos => prevPhotos.filter(photo => photo.id !== deletedPhotoId));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -61,9 +70,19 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold">PhotoSearch AI</h1>
             </div>
+            <Button variant="outline" size="icon" onClick={toggleTheme}>
+              {theme === 'light' ? <Moon className="h-[1.2rem] w-[1.2rem]" /> : <Sun className="h-[1.2rem] w-[1.2rem]" />}
+              <span className="sr-only">Toggle theme</span>
+            </Button>
             <Button onClick={loadRecentPhotos} variant="outline" size="sm">
               Refresh
             </Button>
+            <Link to="/settings">
+              <Button variant="outline" size="icon">
+                <Settings className="h-[1.2rem] w-[1.2rem]" />
+                <span className="sr-only">Settings</span>
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -71,18 +90,14 @@ const Index = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="search" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-8">
+          <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto mb-8">
             <TabsTrigger value="search" className="flex items-center gap-2">
               <SearchIcon className="w-4 h-4" />
               Search
             </TabsTrigger>
-            <TabsTrigger value="upload" className="flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              Upload
-            </TabsTrigger>
-            <TabsTrigger value="test" className="flex items-center gap-2">
-              <TestTube className="w-4 h-4" />
-              Test
+            <TabsTrigger value="folder-upload" className="flex items-center gap-2">
+              <Folder className="w-4 h-4" />
+              Folder Upload
             </TabsTrigger>
           </TabsList>
 
@@ -104,16 +119,12 @@ const Index = () => {
                   {photos.length} photos
                 </span>
               </div>
-              <PhotoGrid photos={photos} loading={loading} />
+              <PhotoGrid photos={photos} loading={loading} onPhotoDelete={handlePhotoDelete} />
             </div>
           </TabsContent>
 
-          <TabsContent value="upload">
+          <TabsContent value="folder-upload">
             <FolderUpload />
-          </TabsContent>
-
-          <TabsContent value="test">
-            <ConnectionTest />
           </TabsContent>
         </Tabs>
       </main>

@@ -1,18 +1,35 @@
 import { useState } from 'react';
-import { PhotoRecord } from '@/lib/database';
+import { PhotoRecord, db } from '@/lib/database';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Eye, Calendar, HardDrive } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Eye, Calendar, HardDrive, Trash2 } from 'lucide-react';
 
 interface PhotoGridProps {
   photos: PhotoRecord[];
   loading?: boolean;
+  onPhotoDelete: (id: number) => void;
 }
 
-export function PhotoGrid({ photos, loading }: PhotoGridProps) {
+export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoRecord | null>(null);
+  const [photoToDelete, setPhotoToDelete] = useState<PhotoRecord | null>(null);
+
+  const handleDeletePhoto = async () => {
+    if (photoToDelete && photoToDelete.id !== undefined) {
+      try {
+        await db.deletePhoto(photoToDelete.id);
+        onPhotoDelete(photoToDelete.id);
+        console.log('Photo deleted:', photoToDelete.id);
+      } catch (error) {
+        console.error('Error deleting photo:', error);
+      }
+      setPhotoToDelete(null);
+      setSelectedPhoto(null); // Close detail view if open
+    }
+  };
 
   if (loading) {
     return (
@@ -71,7 +88,7 @@ export function PhotoGrid({ photos, loading }: PhotoGridProps) {
                 <Eye className="w-8 h-8 text-muted-foreground" />
               )}
             </div>
-            <CardContent className="p-3">
+            <CardContent className="p-3 relative">
               <h4 className="font-medium text-sm truncate mb-1">
                 {photo.filename}
               </h4>
@@ -83,6 +100,17 @@ export function PhotoGrid({ photos, loading }: PhotoGridProps) {
                   Processed
                 </Badge>
               )}
+              <Button 
+                variant="destructive" 
+                size="icon" 
+                className="absolute bottom-2 right-2 h-7 w-7"
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent opening the photo dialog
+                  setPhotoToDelete(photo);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </CardContent>
           </Card>
         ))}
@@ -134,6 +162,22 @@ export function PhotoGrid({ photos, loading }: PhotoGridProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!photoToDelete} onOpenChange={() => setPhotoToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the photo 
+              <span className="font-semibold">{photoToDelete?.filename}</span> from your database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePhoto}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

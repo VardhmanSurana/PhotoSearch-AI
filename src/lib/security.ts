@@ -57,7 +57,7 @@ export class SecurityManager {
   static sanitizeInput(input: string): string {
     // Remove potentially dangerous characters for search queries
     return input
-      .replace(/[<>\"']/g, '') // Remove HTML injection characters
+      .replace(/[<>"']/g, '') // Remove HTML injection characters
       .replace(/javascript:/gi, '') // Remove javascript: protocol
       .replace(/data:/gi, '') // Remove data: protocol
       .trim()
