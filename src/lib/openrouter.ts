@@ -4,9 +4,9 @@ let openrouterClient: OpenAI | null = null;
 
 function getOpenrouterClient(apiKey?: string) {
   if (!openrouterClient || (apiKey && openrouterClient.apiKey !== apiKey)) {
-    const finalApiKey = apiKey || import.meta.env.VITE_OPENROUTER_API_KEY;
+    const finalApiKey = apiKey || import.meta.env.OPENROUTER_API_KEY;
     if (!finalApiKey) {
-      throw new Error("VITE_OPENROUTER_API_KEY is not set in .env file or provided.");
+      throw new Error("OPENROUTER_API_KEY is not set in .env file or provided.");
     }
     openrouterClient = new OpenAI({
       apiKey: finalApiKey,
@@ -48,7 +48,7 @@ export async function testOpenrouterConnection(apiKey?: string) {
     // Use fetch directly as per the provided logic
     const response = await fetch('https://openrouter.ai/api/v1/models', {
         headers: {
-            'Authorization': `Bearer ${apiKey || import.meta.env.VITE_OPENROUTER_API_KEY}`,
+            'Authorization': `Bearer ${apiKey || import.meta.env.OPENROUTER_API_KEY}`,
             'Content-Type': 'application/json',
         },
     });

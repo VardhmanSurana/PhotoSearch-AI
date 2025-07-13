@@ -46,6 +46,9 @@ Make sure you have the following software installed on your machine:
     Example of variables you might need:
     ```env
     GEMINI_API_KEY=YOUR_API_KEY_HERE
+    OPENROUTER_API_KEY=YOUR_API_KEY_HERE
+    MISTRAL_API_KEY=YOUR_API_KEY_HERE
+
     ```
 
 ### Running the Development Server

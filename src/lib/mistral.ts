@@ -4,7 +4,7 @@ let mistral: Mistral | null = null;
 
 function getMistralClient(apiKey?: string) {
   if (!mistral || (apiKey && mistral.apiKey !== apiKey)) {
-    const finalApiKey = apiKey || import.meta.env.VITE_MISTRAL_API_KEY;
+    const finalApiKey = apiKey || import.meta.env.MISTRAL_API_KEY;
     if (!finalApiKey) {
       throw new Error("MISTRAL_API_KEY is not set in .env file or provided.");
     }
