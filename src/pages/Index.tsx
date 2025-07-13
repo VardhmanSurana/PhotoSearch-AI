@@ -71,13 +71,6 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold">PhotoSearch AI</h1>
             </div>
-            <Button variant="outline" size="icon" onClick={toggleTheme}>
-              {theme === 'light' ? <Moon className="h-[1.2rem] w-[1.2rem]" /> : <Sun className="h-[1.2rem] w-[1.2rem]" />}
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-            <Button onClick={loadRecentPhotos} variant="outline" size="sm">
-              Refresh
-            </Button>
             <Link to="/settings">
               <Button variant="outline" size="icon">
                 <Settings className="h-[1.2rem] w-[1.2rem]" />

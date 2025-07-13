@@ -28,9 +28,9 @@ export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
       const result = await generateImageDescription(base64Image, IMAGE_PROMPT);
       if (result.success && result.description) {
         // Update the photo in the database with the new description
-        await db.photos.update(selectedPhoto.id!, { description: result.description });
+        await db.photos.update(selectedPhoto.id!, { description: typeof result.description === 'string' ? result.description : '' });
         // Update the selectedPhoto state to reflect the change in the UI
-        setSelectedPhoto(prev => prev ? { ...prev, description: result.description } : null);
+        setSelectedPhoto(prev => prev ? { ...prev, description: typeof result.description === 'string' ? result.description : '' } : null);
       } else {
         console.error("Failed to generate description:", result.description);
         alert("Failed to generate description. Check console for details.");

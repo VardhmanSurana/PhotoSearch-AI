@@ -5,6 +5,7 @@ import { PerformanceManager } from '@/lib/performance';
 import { useToast } from '@/hooks/use-toast';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateImageDescription as generateMistralDescription } from '@/lib/mistral';
+import { generateOpenrouterImageDescription } from '@/lib/openrouter';
 import { IMAGE_PROMPT } from '@/lib/Prompts';
 
 export interface ProcessingStats {
@@ -26,8 +27,9 @@ export function usePhotoProcessor() {
   const processFolder = useCallback(async (
     files: FileList,
     folderName: string,
-    model: 'gemini' | 'ollama' | 'mistral' = 'gemini',
-    apiKey?: string
+    model: 'gemini' | 'ollama' | 'mistral' | 'openrouter' = 'gemini',
+    apiKey?: string,
+    openrouterModel?: string
   ) => {
 
     const imageFiles = Array.from(files).filter(file => 
@@ -220,18 +222,44 @@ export function usePhotoProcessor() {
           } else if (model === 'mistral') {
             try {
               const base64 = await fileToBase64(file);
-              const result = await generateMistralDescription(base64.split(',')[1], IMAGE_PROMPT);
+              const result = await generateMistralDescription(base64.split(',')[1], IMAGE_PROMPT, apiKey);
+              if (result.success && result.description) {
+                const descString = Array.isArray(result.description)
+                  ? result.description.map(chunk => typeof chunk === 'string' ? chunk : JSON.stringify(chunk)).join('\n')
+                  : result.description;
+                const parsed = parseAIResponse(descString);
+                description = parsed.description;
+                classification = parsed.classification;
+                extracted_text = parsed.extracted_text;
+              } else {
+                throw new Error(
+                  Array.isArray(result.description)
+                    ? JSON.stringify(result.description)
+                    : (result.description || "Mistral description generation failed.")
+                );
+              }
+            } catch (error) {
+              console.error('Mistral processing error:', error);
+              throw new Error('Failed to process image with Mistral.');
+            }
+          } else if (model === 'openrouter') {
+            if (!apiKey || !openrouterModel) {
+              throw new Error('OpenRouter API key or model not set.');
+            }
+            try {
+              const base64 = await fileToBase64(file);
+              const result = await generateOpenrouterImageDescription(base64.split(',')[1], IMAGE_PROMPT, openrouterModel, apiKey);
               if (result.success && result.description) {
                 const parsed = parseAIResponse(result.description);
                 description = parsed.description;
                 classification = parsed.classification;
                 extracted_text = parsed.extracted_text;
               } else {
-                throw new Error(result.description || "Mistral description generation failed.");
+                throw new Error(result.description || "OpenRouter description generation failed.");
               }
             } catch (error) {
-              console.error('Mistral processing error:', error);
-              throw new Error('Failed to process image with Mistral.');
+              console.error('OpenRouter processing error:', error);
+              throw new Error('Failed to process image with OpenRouter.');
             }
           }
 
