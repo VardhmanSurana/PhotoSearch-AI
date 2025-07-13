@@ -25,3 +25,18 @@ dist-ssr
 
 # Environment variables
 .env
+
+# Local Storage Data
+data/
+*.sqlite
+*.db
+
+# Photos Data
+photos/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.webp
