@@ -27,8 +27,8 @@ Make sure you have the following software installed on your machine:
 
 1.  **Clone the repository:**
     ```sh
-    git clone https://github.com/your-username/photo-sense-ai.git
-    cd photo-sense-ai
+    git clone https://github.com/your-username/PhotoSearch-AI.
+    cd PhotoSearch-AI
     ```
 
 2.  **Install dependencies:**
