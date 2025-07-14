@@ -12,6 +12,13 @@ Built with a powerful tech stack including React, Vite, TypeScript, and Tailwind
 -   **Modern UI:** Built with Shadcn UI for a sleek and accessible user experience.
 -   **Client-Side Database:** Utilizes Dexie.js for efficient client-side storage and indexing.
 
+## Tools Used
+
+-   **Lovable.dev** - [Lovable.dev](https://lovable.dev/) - Utilized for scaffolding the foundational structure and initial setup of the web application, ensuring a robust and scalable starting point.
+-   **Gemini CLI** - [Gemini CLI](https://github.com/google/generative-ai-docs/blob/main/site/docs/gemini-api/reference/rest/v1beta/models/gemini.md) - Employed as an interactive command-line interface agent to efficiently edit and manage various aspects of the project codebase.
+-   **Jules Google** - [Google Search](https://www.google.com/) - Leveraged for comprehensive research, problem-solving, and continuous improvement of the project through access to vast online resources and documentation.
+-   **CodeRabbit** - [CodeRabbit](https://coderabbit.ai/) - Integrated to streamline and enhance the code review process, providing automated insights and facilitating collaborative development.
+
 ## Getting Started
 
 Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
