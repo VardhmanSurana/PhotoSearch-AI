@@ -8,37 +8,48 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Eye, Calendar, HardDrive, Trash2 } from 'lucide-react';
 import { generateImageDescription } from '@/lib/mistral';
 import { IMAGE_PROMPT } from '@/lib/Prompts';
+import React from 'react';
 
 interface PhotoGridProps {
   photos: PhotoRecord[];
   loading?: boolean;
   onPhotoDelete: (id: number) => void;
+  searchQuery?: string; // Add searchQuery prop
 }
 
-export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
+export default function PhotoGrid({ photos, loading, onPhotoDelete, searchQuery }: PhotoGridProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoRecord | null>(null);
   const [photoToDelete, setPhotoToDelete] = useState<PhotoRecord | null>(null);
-  const [generatingDescription, setGeneratingDescription] = useState(false);
 
-  const handleGenerateDescription = async () => {
-    if (selectedPhoto && selectedPhoto.thumbnail) {
-      setGeneratingDescription(true);
-      // Extract base64 string from data URL
-      const base64Image = selectedPhoto.thumbnail.split(',')[1];
-      const result = await generateImageDescription(base64Image, IMAGE_PROMPT);
-      if (result.success && result.description) {
-        // Update the photo in the database with the new description
-        await db.photos.update(selectedPhoto.id!, { description: typeof result.description === 'string' ? result.description : '' });
-        // Update the selectedPhoto state to reflect the change in the UI
-        setSelectedPhoto(prev => prev ? { ...prev, description: typeof result.description === 'string' ? result.description : '' } : null);
-      } else {
-        console.error("Failed to generate description:", result.description);
-        alert("Failed to generate description. Check console for details.");
+  // Helper function to highlight text
+  const highlightText = (text: string, query: string) => {
+    if (!query || !text) return text;
+
+    const parts: JSX.Element[] = [];
+    let lastIndex = 0;
+    const lowerCaseText = text.toLowerCase();
+    const lowerCaseQuery = query.toLowerCase();
+
+    // Split the query into individual terms for highlighting
+    const queryTerms = lowerCaseQuery.split(/\s+/).filter(term => term.length > 0);
+
+    // Create a regex that matches any of the query terms
+    const regex = new RegExp(`(${queryTerms.join('|')})`, 'gi');
+
+    text.replace(regex, (match, p1, offset) => {
+      if (offset > lastIndex) {
+        parts.push(<React.Fragment key={lastIndex}>{text.substring(lastIndex, offset)}</React.Fragment>);
       }
-      setGeneratingDescription(false);
-    } else {
-      alert("No image thumbnail available for description generation.");
+      parts.push(<span key={offset} className="bg-yellow-300 dark:bg-yellow-600 text-black dark:text-white rounded px-0.5">{match}</span>);
+      lastIndex = offset + match.length;
+      return match;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(<React.Fragment key={lastIndex}>{text.substring(lastIndex)}</React.Fragment>);
     }
+
+    return <>{parts}</>;
   };
 
   const handleDeletePhoto = async () => {
@@ -114,10 +125,10 @@ export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
             </div>
             <CardContent className="p-3 relative">
               <h4 className="font-medium text-sm truncate mb-1">
-                {photo.filename}
+                {highlightText(photo.filename, searchQuery || '')}
               </h4>
               <p className="text-xs text-muted-foreground line-clamp-2">
-                {photo.description}
+                {highlightText(photo.description, searchQuery || '')}
               </p>
               {photo.processed === 1 && (
                 <Badge variant="secondary" className="mt-2 text-xs">
@@ -145,9 +156,9 @@ export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
           {selectedPhoto && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedPhoto.filename}</DialogTitle>
+                <DialogTitle>{highlightText(selectedPhoto.filename, searchQuery || '')}</DialogTitle>
                 <DialogDescription>
-                  Details and AI-generated description for {selectedPhoto.filename}.
+                  Details and AI-generated description for {highlightText(selectedPhoto.filename, searchQuery || '')}.
                 </DialogDescription>
               </DialogHeader>
               
@@ -166,15 +177,9 @@ export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
                   <div>
                     <h4 className="font-medium mb-2">Description</h4>
                     <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
-                      {selectedPhoto.description}
+                      {highlightText(selectedPhoto.description, searchQuery || '')}
                     </p>
-                    <Button 
-                      onClick={handleGenerateDescription}
-                      disabled={generatingDescription}
-                      className="mt-2 w-full"
-                    >
-                      {generatingDescription ? "Generating..." : "Generate Description"}
-                    </Button>
+                    
                   </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
@@ -190,6 +195,14 @@ export function PhotoGrid({ photos, loading, onPhotoDelete }: PhotoGridProps) {
                       {selectedPhoto.path}
                     </div>
                   </div>
+                  {selectedPhoto.extracted_text && selectedPhoto.extracted_text !== "N/A" && (
+                    <div>
+                      <h4 className="font-medium mb-2">Extracted Text</h4>
+                      <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                        {highlightText(selectedPhoto.extracted_text, searchQuery || '')}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </>

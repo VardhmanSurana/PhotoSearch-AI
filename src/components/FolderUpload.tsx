@@ -1,5 +1,4 @@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { usePhotoProcessor } from '@/hooks/usePhotoProcessor';
 import React, { useRef, useState } from 'react';
@@ -7,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Folder, Upload } from 'lucide-react';
 
-export function FolderUpload() {
+export default function FolderUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const singleFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedModel, setSelectedModel] = useState<'gemini' | 'ollama' | 'mistral' | 'openrouter'>(() => {
@@ -48,7 +47,7 @@ export function FolderUpload() {
       <CardContent className="p-6">
         <div className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-            <Folder className="w-8 h-8 text-primary" />
+            <Upload className="w-8 h-8 text-primary" />
           </div>
           
           <div>

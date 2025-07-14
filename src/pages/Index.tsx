@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { SearchEngine } from '@/lib/searchEngine';
 import { PhotoRecord } from '@/lib/database';
@@ -8,7 +9,7 @@ const FolderUpload = lazy(() => import('@/components/FolderUpload'));
 const PhotoGrid = lazy(() => import('@/components/PhotoGrid'));
 const ShowPhotos = lazy(() => import('@/components/ShowPhotos'));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Image, Upload, Search as SearchIcon, TestTube, Sun, Moon, Settings, Folder } from 'lucide-react';
+import { Image, Search as SearchIcon, Upload , Settings } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
@@ -92,8 +93,8 @@ const Index = () => {
               Search
             </TabsTrigger>
             <TabsTrigger value="folder-upload" className="flex items-center gap-2 hover:bg-muted">
-              <Folder className="w-4 h-4" />
-              Folder Upload
+              <Upload className="w-4 h-4" />
+              Image Upload 
             </TabsTrigger>
             <TabsTrigger value="photos" className="flex items-center gap-2 hover:bg-muted">
               <Image className="w-4 h-4" />
@@ -120,7 +121,7 @@ const Index = () => {
                 </span>
               </div>
               <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
-                <PhotoGrid photos={photos} loading={loading} onPhotoDelete={handlePhotoDelete} />
+                <PhotoGrid photos={photos} loading={loading} onPhotoDelete={handlePhotoDelete} searchQuery={searchQuery} />
               </Suspense>
             </div>
           </TabsContent>

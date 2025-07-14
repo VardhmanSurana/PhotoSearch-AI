@@ -1,10 +1,14 @@
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { db } from '@/lib/database';
 import { useState, useEffect } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Settings as SettingsIcon, Wifi, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Settings as SettingsIcon, Wifi, CheckCircle, XCircle, AlertCircle, Sun, Moon, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -40,12 +44,52 @@ export const SettingsPage = () => {
   const [testing, setTesting] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
 
+  const [showClearApiKeysDialog, setShowClearApiKeysDialog] = useState(false);
+  const [showClearPhotosDialog, setShowClearPhotosDialog] = useState(false);
+
   const { toast } = useToast();
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     localStorage.setItem('selectedModel', selectedModel);
   }, [selectedModel]);
+
+  const handleClearApiKeys = () => {
+    localStorage.removeItem('geminiApiKey');
+    localStorage.removeItem('mistralApiKey');
+    localStorage.removeItem('openrouterApiKey');
+    localStorage.removeItem('openrouterSelectedModel');
+    localStorage.removeItem('openrouterModels');
+    setGeminiApiKey('');
+    setMistralApiKey('');
+    setOpenrouterApiKey('');
+    setOpenrouterSelectedModel('');
+    setOpenrouterModels([]);
+    setShowClearApiKeysDialog(false);
+    toast({
+      title: "API Keys Cleared!",
+      description: "All API keys have been removed from local storage.",
+    });
+  };
+
+  const handleClearAllPhotos = async () => {
+    try {
+      await db.photos.clear();
+      await db.folders.clear();
+      setShowClearPhotosDialog(false);
+      toast({
+        title: "All Photos Cleared!",
+        description: "All photos and folders have been removed from the database.",
+      });
+    } catch (error) {
+      console.error("Error clearing photos:", error);
+      toast({
+        title: "Error",
+        description: "Failed to clear photos. Please check console for details.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSaveGeminiApiKey = () => {
     localStorage.setItem('geminiApiKey', geminiApiKey);
@@ -58,6 +102,14 @@ export const SettingsPage = () => {
   const handleSaveMistralApiKey = () => {
     localStorage.setItem('mistralApiKey', mistralApiKey);
     alert('Mistral API Key saved!');
+  };
+
+  const handleSaveOpenrouterApiKey = () => {
+    localStorage.setItem('openrouterApiKey', openrouterApiKey);
+    toast({
+      title: "OpenRouter API Key saved!",
+      description: "Your OpenRouter API key has been successfully saved.",
+    });
   };
 
   const runConnectionTest = async () => {
@@ -164,11 +216,15 @@ export const SettingsPage = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+              <span className="sr-only">Go Back</span>
+            </Button>
             <SettingsIcon className="w-5 h-5" />
-            Settings
-          </CardTitle>
+            <CardTitle>Settings</CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
@@ -347,13 +403,61 @@ export const SettingsPage = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Button onClick={() => navigate(-1)} variant="outline" className="w-full">
-              Go Back
-            </Button>
+          
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Data Management</h3>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Clear All API Keys</h4>
+                <p className="text-sm text-muted-foreground">Remove all stored API keys from your browser's local storage.</p>
+              </div>
+              <Button variant="destructive" onClick={() => setShowClearApiKeysDialog(true)}>
+                Clear Keys
+              </Button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Clear All Photos</h4>
+                <p className="text-sm text-muted-foreground">Permanently delete all photos and folders from your local database.</p>
+              </div>
+              <Button variant="destructive" onClick={() => setShowClearPhotosDialog(true)}>
+                Clear Photos
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showClearApiKeysDialog} onOpenChange={setShowClearApiKeysDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will remove all saved API keys from your local storage. You will need to re-enter them to use the respective AI models.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearApiKeys}>Clear API Keys</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showClearPhotosDialog} onOpenChange={setShowClearPhotosDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete ALL photos and folders from your local database. This will free up storage space.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAllPhotos}>Clear All Photos</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

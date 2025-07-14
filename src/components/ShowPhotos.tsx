@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { SearchEngine } from '@/lib/searchEngine';
 import { PhotoRecord } from '@/lib/database';
-import { PhotoGrid } from '@/components/PhotoGrid';
+import PhotoGrid from '@/components/PhotoGrid';
 import { Button } from '@/components/ui/button';
 
 const ShowPhotos: React.FC = () => {

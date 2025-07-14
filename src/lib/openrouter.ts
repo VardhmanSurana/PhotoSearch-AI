@@ -11,7 +11,7 @@ function getOpenrouterClient(apiKey?: string) {
     openrouterClient = new OpenAI({
       apiKey: finalApiKey,
       baseURL: "https://openrouter.ai/api/v1",
-      dangerouslyAllowBrowser: false,
+      dangerouslyAllowBrowser: true,
     });
   }
   return openrouterClient;
@@ -71,16 +71,26 @@ export async function generateOpenrouterImageDescription(base64Image: string, pr
     const chatResponse = await client.chat.completions.create({
       model: model, // Use the dynamically selected model
       messages: [
-        { role: 'user', content: prompt },
-        // OpenRouter supports vision models, but the exact format might vary.
-        // Assuming a simple text prompt for now, as image input is complex.
-        // If a specific vision model is chosen, this part would need adjustment.
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
+              },
+            },
+          ],
+        },
       ],
     });
 
+    const description = chatResponse.choices[0]?.message?.content || "No description generated.";
+
     return {
       success: true,
-      description: chatResponse.choices[0]?.message?.content || "No description generated.",
+      description: description,
     };
   } catch (error) {
     console.error("Error generating OpenRouter image description:", error);

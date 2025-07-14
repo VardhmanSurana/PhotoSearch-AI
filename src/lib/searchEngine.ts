@@ -11,38 +11,51 @@ export class SearchEngine {
     // Get all processed photos
     const allPhotos = await db.photos.where('processed').equals(1).toArray();
     
-    // Score each photo based on description match
+    // Score each photo based on description, filename, and extracted_text match
     const scoredPhotos = allPhotos.map(photo => {
       const description = photo.description.toLowerCase();
+      const filename = photo.filename.toLowerCase();
+      const extractedText = photo.extracted_text ? photo.extracted_text.toLowerCase() : '';
       let score = 0;
-      
-      // Exact phrase match gets highest score
-      if (description.includes(query.toLowerCase())) {
+      let matchedTermsCount = 0;
+
+      // Check for exact phrase match in any field
+      if (description.includes(query.toLowerCase()) || filename.includes(query.toLowerCase()) || extractedText.includes(query.toLowerCase())) {
         score += 100;
+        matchedTermsCount = searchTerms.length; // All terms considered matched if exact phrase is found
+      } else {
+        // Check individual terms in description, filename, and extracted_text
+        searchTerms.forEach(term => {
+          const termFoundInDescription = description.includes(term);
+          const termFoundInFilename = filename.includes(term);
+          const termFoundInExtractedText = extractedText.includes(term);
+
+          if (termFoundInDescription || termFoundInFilename || termFoundInExtractedText) {
+            matchedTermsCount++;
+          }
+
+          if (termFoundInDescription) {
+            const termCount = (description.match(new RegExp(term, 'g')) || []).length;
+            score += termCount * 10;
+            if (description.includes(' ' + term) || description.startsWith(term)) {
+              score += 5;
+            }
+          }
+          if (termFoundInFilename) {
+            score += 5; // Smaller bonus for term in filename
+          }
+          if (termFoundInExtractedText) {
+            score += 15; // Higher bonus for term in extracted text
+          }
+        });
       }
-      
-      // Individual term matches
-      searchTerms.forEach(term => {
-        const termCount = (description.match(new RegExp(term, 'g')) || []).length;
-        score += termCount * 10;
-        
-        // Bonus for term at start of words
-        if (description.includes(' ' + term) || description.startsWith(term)) {
-          score += 5;
-        }
-      });
-      
-      // Filename match bonus
-      if (photo.filename.toLowerCase().includes(query.toLowerCase())) {
-        score += 20;
-      }
-      
-      return { photo, score };
+
+      return { photo, score, matchedTermsCount };
     });
-    
-    // Filter and sort by score
+
+    // Filter: Only include photos where all search terms are matched and score is positive
     return scoredPhotos
-      .filter(item => item.score > 0)
+      .filter(item => item.score > 0 && item.matchedTermsCount === searchTerms.length)
       .sort((a, b) => b.score - a.score)
       .map(item => item.photo)
       .slice(0, 100);
