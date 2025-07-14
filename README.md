@@ -27,7 +27,7 @@ Make sure you have the following software installed on your machine:
 
 1.  **Clone the repository:**
     ```sh
-    git clone https://github.com/your-username/photo-sense-ai.git
+    git clone https://github.com/VardhmanSurana/Photosense-AI.git
     cd photo-sense-ai
     ```
 
