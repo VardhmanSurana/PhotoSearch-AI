@@ -11,7 +11,7 @@ function getOpenrouterClient(apiKey?: string) {
     openrouterClient = new OpenAI({
       apiKey: finalApiKey,
       baseURL: "https://openrouter.ai/api/v1",
-      dangerouslyAllowBrowser: true, // OpenRouter supports browser usage with API key
+      dangerouslyAllowBrowser: false,
     });
   }
   return openrouterClient;
@@ -45,20 +45,16 @@ interface OpenRouterApiResponse {
 
 export async function testOpenrouterConnection(apiKey?: string) {
   try {
-    // Use fetch directly as per the provided logic
-    const response = await fetch('https://openrouter.ai/api/v1/models', {
-        headers: {
-            'Authorization': `Bearer ${apiKey || import.meta.env.OPENROUTER_API_KEY}`,
-            'Content-Type': 'application/json',
-        },
-    });
-    const data: OpenRouterApiResponse = await response.json();
+    const client = getOpenrouterClient(apiKey);
+    const models = await client.models.list();
     
-    const freeVisionModels = data.data.filter(model => {
-        const hasImageInput = model.architecture?.input_modalities?.includes('image');
-        const isFree = model.pricing?.prompt === '0' && 
-                       model.pricing?.completion === '0' && 
-                       (model.pricing?.image === undefined || model.pricing?.image === '0');
+    const freeVisionModels = models.data.filter(model => {
+      const architecture = (model as any).architecture;
+      const pricing = (model as any).pricing;
+        const hasImageInput = architecture?.input_modalities?.includes('image');
+        const isFree = pricing?.prompt === '0' &&
+                       pricing?.completion === '0' &&
+                       (pricing?.image === undefined || pricing?.image === '0');
         return hasImageInput && isFree;
     });
 

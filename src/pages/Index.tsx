@@ -2,16 +2,18 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { SearchEngine } from '@/lib/searchEngine';
 import { PhotoRecord } from '@/lib/database';
 import { SearchBar } from '@/components/SearchBar';
-import { FolderUpload } from '@/components/FolderUpload';
-import { PhotoGrid } from '@/components/PhotoGrid';
-import { Button } from '@/components/ui/button';
+import { lazy, Suspense } from 'react';
+
+const FolderUpload = lazy(() => import('@/components/FolderUpload'));
+const PhotoGrid = lazy(() => import('@/components/PhotoGrid'));
+const ShowPhotos = lazy(() => import('@/components/ShowPhotos'));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Image, Upload, Search as SearchIcon, TestTube, Sun, Moon, Settings, Folder } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/hooks/useTheme';
 import { ConnectionTest } from '@/components/ConnectionTest';
 import { PerformanceManager } from '@/lib/performance';
-import ShowPhotos from '@/components/ShowPhotos';
 
 const Index = () => {
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
@@ -72,7 +74,7 @@ const Index = () => {
               <h1 className="text-2xl font-bold">PhotoSearch AI</h1>
             </div>
             <Link to="/settings">
-              <Button variant="outline" size="icon">
+              <Button variant="ghost" size="icon">
                 <Settings className="h-[1.2rem] w-[1.2rem]" />
                 <span className="sr-only">Settings</span>
               </Button>
@@ -85,15 +87,15 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="search" className="w-full">
           <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto mb-8">
-            <TabsTrigger value="search" className="flex items-center gap-2">
+            <TabsTrigger value="search" className="flex items-center gap-2 hover:bg-muted">
               <SearchIcon className="w-4 h-4" />
               Search
             </TabsTrigger>
-            <TabsTrigger value="folder-upload" className="flex items-center gap-2">
+            <TabsTrigger value="folder-upload" className="flex items-center gap-2 hover:bg-muted">
               <Folder className="w-4 h-4" />
               Folder Upload
             </TabsTrigger>
-            <TabsTrigger value="photos" className="flex items-center gap-2">
+            <TabsTrigger value="photos" className="flex items-center gap-2 hover:bg-muted">
               <Image className="w-4 h-4" />
               Photos
             </TabsTrigger>
@@ -117,16 +119,22 @@ const Index = () => {
                   {photos.length} photos
                 </span>
               </div>
-              <PhotoGrid photos={photos} loading={loading} onPhotoDelete={handlePhotoDelete} />
+              <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
+                <PhotoGrid photos={photos} loading={loading} onPhotoDelete={handlePhotoDelete} />
+              </Suspense>
             </div>
           </TabsContent>
 
           <TabsContent value="folder-upload">
-            <FolderUpload />
+            <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
+              <FolderUpload />
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="photos">
-            <ShowPhotos />
+            <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>
+              <ShowPhotos />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </main>
